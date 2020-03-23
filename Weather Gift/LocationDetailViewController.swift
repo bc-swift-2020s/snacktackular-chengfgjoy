@@ -16,35 +16,61 @@ class LocationDetailViewController: UIViewController {
     
     @IBOutlet weak var imageVIew: UIImageView!
     
-    var weatherLocation: WeatherLocation!
-    var weatherLocations: [WeatherLocation] = []
+    @IBOutlet weak var pageControl: UIPageControl!
+    
+   
+    var locationIndex = 0
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        if weatherLocation == nil{
-            weatherLocation = WeatherLocation(name: "Current Location", latitude: 0.0, longtitude: 0.0)
-            weatherLocations.append(weatherLocation)
-        }
        updateUserInterface()
     }
+    
+  
     func updateUserInterface(){
-        dateLabel.text = ""
-        placeLabel.text = weatherLocation.name
-        temperatureLabel.text = "--°"
-        summaryLabel.text = ""
+        let pageViewController = UIApplication.shared.windows.first!.rootViewController as! PageViewController
+        let weatherLocation = pageViewController.weatherLocations[locationIndex]
+        let weatherDetail = WeatherDetail(name: weatherLocation.name, latitude: weatherLocation.latitude, longtitude: weatherLocation.longtitude)
         
+      
+        
+        pageControl.numberOfPages = pageViewController.weatherLocations.count
+        pageControl.currentPage = locationIndex
+        
+        weatherDetail.getData{
+            DispatchQueue.main.async {
+
+                self.dateLabel.text = weatherDetail.timezone
+            self.placeLabel.text = weatherDetail.name
+                self.temperatureLabel.text = "\(weatherDetail.temperature)"
+                self.summaryLabel.text = weatherDetail.summary
+                self.imageVIew.image = UIImage(named: weatherDetail.dailyIcon)
+    }
+        }
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let destination = segue.destination as! ViewController
-        destination.weatherLocations = weatherLocations
+         let pageViewController = UIApplication.shared.windows.first!.rootViewController as! PageViewController
+        destination.weatherLocations = pageViewController.weatherLocations
     }
    
     @IBAction func unwindFromLocationListViewController(segue: UIStoryboardSegue){
         let source = segue.source as! ViewController
-        weatherLocations = source.weatherLocations
-        weatherLocation = weatherLocations[source.selectedLocationIndex]
-        updateUserInterface()
+        locationIndex = source.selectedLocationIndex
+        
+         let pageViewController = UIApplication.shared.windows.first!.rootViewController as! PageViewController
+        pageViewController.weatherLocations = source.weatherLocations
+        pageViewController.setViewControllers([pageViewController.createLocationDetailViewController(forPage: locationIndex)], direction:  .forward, animated: false, completion: nil)
     }
-
+    @IBAction func pageControlTapped(_ sender: UIPageControl) {
+        let pageViewController = UIApplication.shared.windows.first!.rootViewController as! PageViewController
+       
+        var direction: UIPageViewController.NavigationDirection = .forward
+        if sender.currentPage < locationIndex{
+            direction = .reverse
+        }
+        pageViewController.setViewControllers([pageViewController.createLocationDetailViewController(forPage: sender.currentPage)], direction: direction, animated: true, completion: nil)
+    }
+     
 }
