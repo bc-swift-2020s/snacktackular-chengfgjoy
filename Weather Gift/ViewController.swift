@@ -108,6 +108,8 @@ extension ViewController: GMSAutocompleteViewControllerDelegate {
   // Handle the user's selection.
   func viewController(_ viewController: GMSAutocompleteViewController, didAutocompleteWith place: GMSPlace) {
     let newLocation = WeatherLocation(name: place.name ?? "unknown place", latitude: place.coordinate.latitude, longtitude: place.coordinate.longitude)
+    weatherLocations.append(newLocation)
+    tableView.reloadData()
     dismiss(animated: true, completion: nil)
   }
 
